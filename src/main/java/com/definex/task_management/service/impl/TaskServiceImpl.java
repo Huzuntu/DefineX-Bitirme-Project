@@ -1,0 +1,220 @@
+package com.definex.task_management.service.impl;
+
+import com.definex.task_management.dto.TaskRequest;
+import com.definex.task_management.dto.TaskResponse;
+import com.definex.task_management.entity.Project;
+import com.definex.task_management.entity.Task;
+import com.definex.task_management.entity.User;
+import com.definex.task_management.enums.TaskPriority;
+import com.definex.task_management.enums.TaskState;
+import com.definex.task_management.exception.DeniedAccessException;
+import com.definex.task_management.exception.EntityNotFoundException;
+import com.definex.task_management.exception.InvalidStateTransitionException;
+import com.definex.task_management.mapper.TaskMapper;
+import com.definex.task_management.repository.TaskRepository;
+import com.definex.task_management.security.CustomUserDetails;
+import com.definex.task_management.service.BaseService;
+import com.definex.task_management.service.ProjectTaskService;
+import com.definex.task_management.service.TaskService;
+import com.definex.task_management.service.UserService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.HashSet;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+public class TaskServiceImpl extends BaseService implements TaskService {
+    private final TaskRepository taskRepository;
+    private final ProjectTaskService projectTaskService;
+    private final UserService userService;
+
+    public TaskServiceImpl(TaskRepository taskRepository,
+                          @Lazy ProjectTaskService projectTaskService,
+                          UserService userService) {
+        this.taskRepository = taskRepository;
+        this.projectTaskService = projectTaskService;
+        this.userService = userService;
+    }
+
+    @Override
+    @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
+    @CacheEvict(value = "taskCache", allEntries = true)
+    public TaskResponse createTask(TaskRequest taskRequest) {
+        CustomUserDetails currentUser = getCurrentUser();
+        Project project = projectTaskService.getProjectEntityByIdWithValidation(taskRequest.getProjectId(), currentUser.getUserId());
+
+        Task task = TaskMapper.toEntity(taskRequest);
+        task.setProject(project);
+        task.setState(TaskState.BACKLOG);
+
+        if (taskRequest.getAssigneeIds() != null && !taskRequest.getAssigneeIds().isEmpty()) {
+            Set<User> assignees = new HashSet<>();
+            for (UUID id : taskRequest.getAssigneeIds()) {
+                assignees.add(userService.getUserEntityById(id));
+            }
+            task.setAssignees(assignees);
+        }
+        Task savedTask = taskRepository.save(task);
+        
+        return TaskMapper.toResponse(savedTask);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
+    @Cacheable(value = "taskCache", key = "#taskId")
+    public TaskResponse getTaskById(UUID taskId) {
+        CustomUserDetails currentUser = getCurrentUser();
+        Task task = getTaskEntityById(taskId);
+        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+        return TaskMapper.toResponse(task);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
+    @Cacheable(value = "taskCache", key = "'project:' + #projectId")
+    public List<TaskResponse> getAllTasksUnderProject(UUID projectId) {
+        CustomUserDetails currentUser = getCurrentUser();
+        Project project = projectTaskService.getProjectEntityByIdWithValidation(projectId, currentUser.getUserId());
+
+        projectTaskService.validateProjectAccess(currentUser, project);
+
+        List<Task> tasks = taskRepository.findByProjectId(projectId);
+        return tasks.stream()
+                .map(TaskMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
+    @CacheEvict(value = "taskCache", allEntries = true)
+    public TaskResponse updateTask(UUID taskId, TaskRequest taskRequest) {
+        CustomUserDetails currentUser = getCurrentUser();
+        Task task = getTaskEntityById(taskId);
+        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+
+        if (!task.getProject().getId().equals(taskRequest.getProjectId())) {
+            throw new DeniedAccessException("Cannot change task's project");
+        }
+
+        task.setTitle(taskRequest.getTitle());
+        task.setUserStory(taskRequest.getUserStory());
+        task.setAcceptanceCriteria(taskRequest.getAcceptanceCriteria());
+        task.setPriority(taskRequest.getPriority());
+
+        if (taskRequest.getAssigneeIds() != null) {
+            Set<User> assignees = taskRequest.getAssigneeIds().stream()
+                    .map(id -> userService.getUserEntityById(id))
+                    .collect(Collectors.toSet());
+            task.setAssignees(assignees);
+        }
+        Task updatedTask = taskRepository.save(task);
+        return TaskMapper.toResponse(updatedTask);
+    }
+
+    @Override
+    @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
+    @CacheEvict(value = "taskCache", allEntries = true)
+    public TaskResponse deleteTask(UUID taskId) {
+        CustomUserDetails currentUser = getCurrentUser();
+        Task task = getTaskEntityById(taskId);
+        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+        taskRepository.delete(task);
+        return TaskMapper.toResponse(task);
+    }
+
+    @Override
+    @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
+    @CacheEvict(value = "taskCache", allEntries = true)
+    public TaskResponse updateTaskState(UUID taskId, TaskState newState, String reason) {
+        CustomUserDetails currentUser = getCurrentUser();
+        Task task = getTaskEntityById(taskId);
+        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+        validateStateTransition(task.getState(), newState, reason);
+
+        task.setState(newState);
+        if (newState == TaskState.BLOCKED || newState == TaskState.CANCELLED) {
+            task.setStateTransitionReason(reason);
+        }
+
+        Task updatedTask = taskRepository.save(task);
+        return TaskMapper.toResponse(updatedTask);
+    }
+
+    @Override
+    @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
+    @CacheEvict(value = "taskCache", allEntries = true)
+    public TaskResponse updateTaskPriority(UUID taskId, TaskPriority priority) {
+        CustomUserDetails currentUser = getCurrentUser();
+        Task task = getTaskEntityById(taskId);
+
+        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+
+        task.setPriority(priority);
+        Task updatedTask = taskRepository.save(task);
+        return TaskMapper.toResponse(updatedTask);
+    }
+
+    @Override
+    @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
+    @CacheEvict(value = "taskCache", allEntries = true)
+    public TaskResponse assignUserToTask(UUID taskId, UUID userId) {
+        User user = userService.getUserEntityById(userId);
+        CustomUserDetails currentUser = getCurrentUser();
+        Task task = getTaskEntityById(taskId);
+        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+
+        task.getAssignees().add(user);
+        Task updatedTask = taskRepository.save(task);
+        return TaskMapper.toResponse(updatedTask);
+    }
+
+    @Override
+    @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
+    @CacheEvict(value = "taskCache", allEntries = true)
+    public TaskResponse removeUserFromTask(UUID taskId, UUID userId) {
+        CustomUserDetails currentUser = getCurrentUser();
+        Task task = getTaskEntityById(taskId);
+        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+
+        User user = userService.getUserEntityById(userId);
+        boolean isAssigned = task.getAssignees().stream()
+            .anyMatch(assignee -> assignee.getId().equals(userId));
+        if (!isAssigned) {
+            throw new EntityNotFoundException("User is not assigned to this task");
+        }
+
+        task.getAssignees().remove(user);
+        Task updatedTask = taskRepository.save(task);
+        return TaskMapper.toResponse(updatedTask);
+    }
+
+    private Task getTaskEntityById(UUID taskId) {
+        return taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("Task not found with id: " + taskId));
+    }
+
+    private void validateStateTransition(TaskState currentState, TaskState newState, String reason) {
+        if (!currentState.canTransitionTo(newState, reason)) {
+            throw new InvalidStateTransitionException("Invalid state transition from " + currentState + " to " + newState);
+        }
+    }
+} 
