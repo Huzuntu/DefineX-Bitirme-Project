@@ -34,15 +34,73 @@ This project is an advanced task management system developed for DefineX, provid
 
 ## Prerequisites
 
-- Docker and Docker Compose (optional, for containerized setup)
-- Java 21
-- Maven
-- PostgreSQL
-- Redis
+- Docker and Docker Compose (for containerized setup)
+- Java 21 (for local development)
+- Maven (for local development)
+- PostgreSQL (for local development)
+- Redis (for local development)
 
 ## Getting Started
 
-### Option 1: Running Locally
+### Option 1: Running with Docker Compose (Recommended)
+
+The easiest way to run the application is using Docker Compose, which will set up PostgreSQL, Redis, and the application in a single command.
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/task-management.git
+   cd task-management
+   ```
+
+2. Run with Docker Compose:
+   ```bash
+   docker-compose up -d
+   ```
+
+   This will start:
+   - Task Management Application (http://localhost:8086)
+   - PostgreSQL database
+   - Redis cache
+
+   All services are pre-configured to work together.
+
+3. Access the application:
+   - API Documentation: http://localhost:8086/swagger-ui.html
+
+4. To stop all services:
+   ```bash
+   docker-compose down
+   ```
+
+5. To stop and remove volumes (data will be lost):
+   ```bash
+   docker-compose down -v
+   ```
+
+### Option 2: Running Single Docker Container
+
+If you already have PostgreSQL and Redis running, you can just run the application container:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/task-management.git
+   cd task-management
+   ```
+
+2. Build and run the Docker container:
+   ```bash
+   docker build -t task-management .
+   docker run -p 8086:8086 \
+     -e DB_URL=jdbc:postgresql://host.docker.internal:5432/defineX-task \
+     -e DB_USERNAME=postgres \
+     -e DB_PASSWORD=password \
+     -e REDIS_HOST=host.docker.internal \
+     task-management
+   ```
+
+   Note: `host.docker.internal` is used to connect to services running on your host machine from within the Docker container.
+
+### Option 3: Running Locally
 
 1. Clone the repository:
    ```bash
@@ -86,22 +144,6 @@ This project is an advanced task management system developed for DefineX, provid
 5. Access the application:
    - API Documentation: http://localhost:8086/swagger-ui.html
 
-### Option 2: Running with Docker
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/task-management.git
-   cd task-management
-   ```
-
-2. Build and run the Docker container:
-   ```bash
-   docker build -t task-management .
-   docker run -p 8086:8086 task-management
-   ```
-
-   Note: For a complete setup including PostgreSQL and Redis, consider creating a docker-compose.yml file.
-
 ## API Documentation
 
 The API documentation is available through Swagger UI at http://localhost:8086/swagger-ui.html
@@ -139,6 +181,15 @@ mvn test
 ```bash
 mvn clean package
 ```
+
+## Project Structure
+
+- `/src/main/java` - Java source code
+- `/src/main/resources` - Configuration files
+- `/src/test` - Test classes
+- `/uploads` - File storage location
+- `docker-compose.yml` - Docker Compose configuration
+- `Dockerfile` - Docker container configuration
 
 ## Contributing
 

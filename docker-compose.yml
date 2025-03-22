@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: task-management-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: defineX-task
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - task-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: task-management-redis
+    ports:
+      - "6379:6379"
+    command: redis-server
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - task-network
+
+  # Task Management Application
+  app:
+    build: .
+    container_name: task-management-app
+    ports:
+      - "8086:8086"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/defineX-task
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      JWT_EXPIRATION: 86400000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      FILE_STORAGE_LOCATION: /app/uploads
+      CORS_ALLOWED_ORIGINS: "*"
+      CORS_ALLOWED_METHODS: GET,POST,PUT,PATCH,DELETE,OPTIONS
+      CORS_ALLOWED_HEADERS: authorization,content-type,x-auth-token
+      CORS_EXPOSED_HEADERS: x-auth-token
+      CORS_MAX_AGE: 3600
+    volumes:
+      - uploads-data:/app/uploads
+    networks:
+      - task-network
+
+volumes:
+  postgres-data:
+  redis-data:
+  uploads-data:
+
+networks:
+  task-network:
+    driver: bridge 
