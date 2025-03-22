@@ -15,6 +15,7 @@ import com.definex.task_management.service.AttachmentService;
 import com.definex.task_management.service.BaseService;
 import com.definex.task_management.service.TaskService;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -33,6 +34,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class AttachmentServiceImpl extends BaseService implements AttachmentService {
     private final AttachmentRepository attachmentRepository;
     private final TaskRepository taskRepository;
@@ -58,6 +60,7 @@ public class AttachmentServiceImpl extends BaseService implements AttachmentServ
     @Transactional
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public AttachmentResponse uploadAttachment(AttachmentRequest attachmentRequest) {
+        log.info("Uploading attachment for task id: {}", attachmentRequest.getTaskId());
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(attachmentRequest.getTaskId());
 
@@ -82,6 +85,7 @@ public class AttachmentServiceImpl extends BaseService implements AttachmentServ
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public AttachmentResponse getAttachmentById(UUID attachmentId) {
+        log.info("Fetching attachment with id: {}", attachmentId);
         CustomUserDetails currentUser = getCurrentUser();
         Attachment attachment = getAttachmentEntityById(attachmentId);
 
@@ -95,6 +99,7 @@ public class AttachmentServiceImpl extends BaseService implements AttachmentServ
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public List<AttachmentResponse> getAttachmentsByTaskId(UUID taskId) {
+        log.info("Fetching all attachments for task id: {}", taskId);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
 
@@ -110,6 +115,7 @@ public class AttachmentServiceImpl extends BaseService implements AttachmentServ
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public Resource downloadAttachment(UUID attachmentId) {
+        log.info("Downloading attachment with id: {}", attachmentId);
         CustomUserDetails currentUser = getCurrentUser();
         Attachment attachment = getAttachmentEntityById(attachmentId);
 
@@ -133,6 +139,7 @@ public class AttachmentServiceImpl extends BaseService implements AttachmentServ
     @Transactional
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public void deleteAttachment(UUID attachmentId) {
+        log.info("Deleting attachment with id: {}", attachmentId);
         CustomUserDetails currentUser = getCurrentUser();
         Attachment attachment = getAttachmentEntityById(attachmentId);
 

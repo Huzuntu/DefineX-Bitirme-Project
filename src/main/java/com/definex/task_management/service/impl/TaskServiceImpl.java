@@ -51,6 +51,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse createTask(TaskRequest taskRequest) {
+        log.info("Creating new task with title: {}", taskRequest.getTitle());
         CustomUserDetails currentUser = getCurrentUser();
         Project project = projectTaskService.getProjectEntityByIdWithValidation(taskRequest.getProjectId(), currentUser.getUserId());
 
@@ -75,6 +76,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     @Cacheable(value = "taskCache", key = "#taskId")
     public TaskResponse getTaskById(UUID taskId) {
+        log.info("Fetching task with id: {}", taskId);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
         projectTaskService.validateProjectAccess(currentUser, task.getProject());
@@ -86,6 +88,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @Cacheable(value = "taskCache", key = "'project:' + #projectId")
     public List<TaskResponse> getAllTasksUnderProject(UUID projectId) {
+        log.info("Fetching all tasks for project id: {}", projectId);
         CustomUserDetails currentUser = getCurrentUser();
         Project project = projectTaskService.getProjectEntityByIdWithValidation(projectId, currentUser.getUserId());
 
@@ -102,6 +105,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse updateTask(UUID taskId, TaskRequest taskRequest) {
+        log.info("Updating task with id: {}", taskId);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
         projectTaskService.validateProjectAccess(currentUser, task.getProject());
@@ -130,6 +134,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse deleteTask(UUID taskId) {
+        log.info("Deleting task with id: {}", taskId);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
         projectTaskService.validateProjectAccess(currentUser, task.getProject());
@@ -142,6 +147,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse updateTaskState(UUID taskId, TaskState newState, String reason) {
+        log.info("Updating task state for task id: {} to state: {}", taskId, newState);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
         projectTaskService.validateProjectAccess(currentUser, task.getProject());
@@ -161,6 +167,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse updateTaskPriority(UUID taskId, TaskPriority priority) {
+        log.info("Updating task priority for task id: {} to priority: {}", taskId, priority);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
 
@@ -176,6 +183,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse assignUserToTask(UUID taskId, UUID userId) {
+        log.info("Assigning user id: {} to task id: {}", userId, taskId);
         User user = userService.getUserEntityById(userId);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
@@ -191,6 +199,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse removeUserFromTask(UUID taskId, UUID userId) {
+        log.info("Removing user id: {} from task id: {}", userId, taskId);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
         projectTaskService.validateProjectAccess(currentUser, task.getProject());
@@ -208,6 +217,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
     }
 
     private Task getTaskEntityById(UUID taskId) {
+        log.info("Fetching task entity with id: {}", taskId);
         return taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with id: " + taskId));
     }

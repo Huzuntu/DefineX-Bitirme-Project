@@ -15,6 +15,7 @@ import com.definex.task_management.repository.UserRepository;
 import com.definex.task_management.security.CustomUserDetails;
 import com.definex.task_management.service.CommentService;
 import com.definex.task_management.service.BaseService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class CommentServiceImpl extends BaseService implements CommentService {
     private final CommentRepository commentRepository;
     private final TaskRepository taskRepository;
@@ -39,6 +41,7 @@ public class CommentServiceImpl extends BaseService implements CommentService {
     @Transactional
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public CommentResponse createComment(CommentRequest commentRequest) {
+        log.info("Creating new comment for task id: {}", commentRequest.getTaskId());
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(commentRequest.getTaskId());
         User user = getUserEntityById(currentUser.getUserId());
@@ -55,6 +58,7 @@ public class CommentServiceImpl extends BaseService implements CommentService {
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public CommentResponse getCommentById(UUID commentId) {
+        log.info("Fetching comment with id: {}", commentId);
         CustomUserDetails currentUser = getCurrentUser();
         Comment comment = getCommentEntityById(commentId);
 
@@ -68,6 +72,7 @@ public class CommentServiceImpl extends BaseService implements CommentService {
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public List<CommentResponse> getCommentsByTaskId(UUID taskId) {
+        log.info("Fetching all comments for task id: {}", taskId);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
 
@@ -84,6 +89,7 @@ public class CommentServiceImpl extends BaseService implements CommentService {
     @Transactional
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public CommentResponse updateComment(UUID commentId, String content) {
+        log.info("Updating comment with id: {}", commentId);
         CustomUserDetails currentUser = getCurrentUser();
         Comment comment = getCommentEntityById(commentId);
 
@@ -106,6 +112,7 @@ public class CommentServiceImpl extends BaseService implements CommentService {
     @Transactional
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public void deleteComment(UUID commentId) {
+        log.info("Deleting comment with id: {}", commentId);
         CustomUserDetails currentUser = getCurrentUser();
         Comment comment = getCommentEntityById(commentId);
 

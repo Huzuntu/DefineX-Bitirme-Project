@@ -1,23 +1,12 @@
 package com.definex.task_management.mapper;
 
-import com.definex.task_management.dto.AttachmentResponse;
-import com.definex.task_management.dto.CommentResponse;
 import com.definex.task_management.dto.TaskRequest;
 import com.definex.task_management.dto.TaskResponse;
-import com.definex.task_management.dto.UserResponse;
-import com.definex.task_management.entity.Attachment;
-import com.definex.task_management.entity.Comment;
 import com.definex.task_management.entity.Task;
-import com.definex.task_management.entity.User;
 
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 @Component

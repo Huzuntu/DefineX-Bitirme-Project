@@ -15,6 +15,7 @@ import com.definex.task_management.service.ProjectService;
 import com.definex.task_management.service.ProjectTaskService;
 import com.definex.task_management.service.UserService;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,6 +28,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class ProjectServiceImpl extends BaseService implements ProjectService {
     private final ProjectRepository projectRepository;
     private final UserService userService;
@@ -45,6 +47,7 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
     @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
     @CacheEvict(value = "projectCache", allEntries = true)
     public ProjectResponse createProject(ProjectRequest projectRequest) {
+        log.info("Creating new project with title: {}", projectRequest.getTitle());
         CustomUserDetails currentUser = getCurrentUser();
         validateSameDepartment(currentUser, projectRequest.getDepartment());
 
@@ -67,6 +70,7 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     @Cacheable(value = "projectCache", key = "#projectId")
     public ProjectResponse getProjectById(UUID projectId) {
+        log.info("Fetching project with id: {}", projectId);
         CustomUserDetails currentUser = getCurrentUser();
         Project project = getProjectEntityById(projectId);
         validateUserAccessToProject(currentUser, project);
@@ -78,6 +82,7 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @Cacheable(value = "projectCache", key = "'department:' + #department")
     public List<ProjectResponse> getProjectsByDepartment(String department) {
+        log.info("Fetching all projects for department: {}", department);
         CustomUserDetails currentUser = getCurrentUser();
         validateSameDepartment(currentUser, department);
 
@@ -92,6 +97,7 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
     @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
     @CacheEvict(value = "projectCache", allEntries = true)
     public ProjectResponse updateProject(UUID projectId, ProjectRequest projectRequest) {
+        log.info("Updating project with id: {}", projectId);
         CustomUserDetails currentUser = getCurrentUser();
         Project project = getProjectEntityById(projectId);
         validateUserAccessToProject(currentUser, project);
@@ -116,6 +122,7 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
     @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
     @CacheEvict(value = "projectCache", allEntries = true)
     public ProjectResponse updateProjectStatus(UUID projectId, String newStatus) {
+        log.info("Updating status of project id: {} to: {}", projectId, newStatus);
         CustomUserDetails currentUser = getCurrentUser();
         Project project = getProjectEntityById(projectId);
         validateUserAccessToProject(currentUser, project);
@@ -133,6 +140,7 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
     @Transactional
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER')")
     public ProjectResponse assignTask(UUID projectId, UUID taskId) {
+        log.info("Assigning task id: {} to project id: {}", taskId, projectId);
         return projectTaskService.assignTaskToProject(projectId, taskId, getCurrentUser());
     }
 
@@ -141,6 +149,7 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
     @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
     @CacheEvict(value = "projectCache", allEntries = true)
     public ProjectResponse addTeamMember(UUID projectId, UUID userId) {
+        log.info("Adding user id: {} to project id: {}", userId, projectId);
         CustomUserDetails currentUser = getCurrentUser();
         Project project = getProjectEntityById(projectId);
         validateUserAccessToProject(currentUser, project);
@@ -157,6 +166,7 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
     @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
     @CacheEvict(value = "projectCache", allEntries = true)
     public ProjectResponse removeTeamMember(UUID projectId, UUID userId) {
+        log.info("Removing user id: {} from project id: {}", userId, projectId);
         CustomUserDetails currentUser = getCurrentUser();
         Project project = getProjectEntityById(projectId);
         validateUserAccessToProject(currentUser, project);
@@ -173,6 +183,7 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
     @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
     @CacheEvict(value = "projectCache", allEntries = true)
     public void deleteProject(UUID projectId) {
+        log.info("Deleting project with id: {}", projectId);
         CustomUserDetails currentUser = getCurrentUser();
         Project project = getProjectEntityById(projectId);
         validateUserAccessToProject(currentUser, project);

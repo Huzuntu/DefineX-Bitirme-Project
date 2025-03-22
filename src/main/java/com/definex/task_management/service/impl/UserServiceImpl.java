@@ -8,6 +8,7 @@ import com.definex.task_management.mapper.UserMapper;
 import com.definex.task_management.repository.UserRepository;
 import com.definex.task_management.service.UserService;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,6 +21,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -33,6 +35,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @CacheEvict(value = "userCache", allEntries = true)
     public UserResponse createUser(UserRequest userRequest) {
+        log.info("Creating new user with email: {}", userRequest.getEmail());
         User newUser = UserMapper.toEntity(userRequest);
         String newPassword = passwordEncoder.encode(userRequest.getPassword());
         newUser.setPassword(newPassword);
@@ -44,6 +47,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     @Cacheable(value = "userCache", key = "#userId")
     public UserResponse getUserById(UUID userId) {
+        log.info("Fetching user with id: {}", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
         return UserMapper.toResponse(user);
     }
@@ -52,6 +56,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     @Cacheable(value = "userCache", key = "#userId")
     public User getUserEntityById(UUID userId) {
+        log.info("Fetching user entity with id: {}", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
         return user;
     }
@@ -60,6 +65,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     @Cacheable(value = "userCache", key = "'all'")
     public List<UserResponse> getAllUsers() {
+        log.info("Fetching all users");
         List<User> users = userRepository.findAll();
         return users.stream()
                 .map(UserMapper::toResponse)
@@ -71,6 +77,7 @@ public class UserServiceImpl implements UserService {
     @CacheEvict(value = "userCache", allEntries = true)
     @PreAuthorize("hasRole('PROJECT_GROUP_MANAGER')")
     public UserResponse updateUser(UUID userId, UserRequest userRequest) {
+        log.info("Updating user with id: {}", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
         user.setName(userRequest.getName());
         user.setEmail(userRequest.getEmail());
@@ -89,6 +96,7 @@ public class UserServiceImpl implements UserService {
     @CacheEvict(value = "userCache", allEntries = true)
     @PreAuthorize("hasRole('PROJECT_GROUP_MANAGER')")
     public void deleteUser(UUID userId) {
+        log.info("Deleting user with id: {}", userId);
         if (!userRepository.existsById(userId)) {
             throw new EntityNotFoundException("User not found with id: " + userId);
         }
@@ -98,6 +106,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public boolean hasAnyUsers() {
+        log.info("Checking if any users exist");
         return userRepository.count() > 0;
     }
 }

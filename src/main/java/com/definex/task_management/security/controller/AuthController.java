@@ -8,6 +8,7 @@ import com.definex.task_management.enums.UserRole;
 import com.definex.task_management.exception.DeniedAccessException;
 import com.definex.task_management.security.service.AuthenticationService;
 import com.definex.task_management.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@Tag(name = "1. Authentication")
 public class AuthController {
 
     private final AuthenticationService authenticationService;
