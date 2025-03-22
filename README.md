@@ -28,18 +28,21 @@ This project is an advanced task management system developed for DefineX, provid
 - Spring Boot 3.4.3
 - PostgreSQL
 - Redis
-- Apache Kafka
 - Docker
 - JWT Authentication
 - Swagger UI
 
 ## Prerequisites
 
-- Docker and Docker Compose
-- Java 21 (for local development)
-- Maven (for local development)
+- Docker and Docker Compose (optional, for containerized setup)
+- Java 21
+- Maven
+- PostgreSQL
+- Redis
 
 ## Getting Started
+
+### Option 1: Running Locally
 
 1. Clone the repository:
    ```bash
@@ -47,39 +50,57 @@ This project is an advanced task management system developed for DefineX, provid
    cd task-management
    ```
 
-2. Run with Docker Compose:
-   ```bash
-   docker-compose up -d
+2. Set up your PostgreSQL database:
+   - Create a database named `defineX-task`
+   - Use default username `postgres` or update in your .env file
+
+3. Configure environment variables:
+   - Create a `.env` file in the root directory with the following content:
+   ```
+   DB_URL=jdbc:postgresql://localhost:5432/defineX-task
+   DB_USERNAME=postgres
+   DB_PASSWORD=your_password
+
+   JWT_SECRET=your_jwt_secret_key
+   JWT_EXPIRATION=86400000
+
+   REDIS_HOST=localhost
+   REDIS_PORT=6379
+   REDIS_PASSWORD=
+
+   FILE_STORAGE_LOCATION=./uploads
+
+   CORS_ALLOWED_ORIGINS=*
+   CORS_ALLOWED_METHODS=GET,POST,PUT,PATCH,DELETE,OPTIONS
+   CORS_ALLOWED_HEADERS=authorization,content-type,x-auth-token
+   CORS_EXPOSED_HEADERS=x-auth-token
+   CORS_MAX_AGE=3600
    ```
 
-   This will start:
-   - Task Management Application (http://localhost:8086)
-   - Kafka UI (http://localhost:8080)
-   - PostgreSQL
-   - Redis
-   - Kafka
-   - Zookeeper
-
-3. Access the application:
-   - API Documentation: http://localhost:8086/swagger-ui.html
-   - Kafka UI: http://localhost:8080
-
-## Development Setup
-
-1. Install dependencies:
+4. Install dependencies and run the application:
    ```bash
    mvn clean install
-   ```
-
-2. Run tests:
-   ```bash
-   mvn test
-   ```
-
-3. Run the application locally:
-   ```bash
    mvn spring-boot:run
    ```
+
+5. Access the application:
+   - API Documentation: http://localhost:8086/swagger-ui.html
+
+### Option 2: Running with Docker
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/task-management.git
+   cd task-management
+   ```
+
+2. Build and run the Docker container:
+   ```bash
+   docker build -t task-management .
+   docker run -p 8086:8086 task-management
+   ```
+
+   Note: For a complete setup including PostgreSQL and Redis, consider creating a docker-compose.yml file.
 
 ## API Documentation
 
@@ -105,6 +126,20 @@ Tasks follow a specific state transition flow:
 - Secure file storage
 - API endpoint protection
 
+## Development
+
+### Running Tests
+
+```bash
+mvn test
+```
+
+### Building the Application
+
+```bash
+mvn clean package
+```
+
 ## Contributing
 
 1. Fork the repository
@@ -119,47 +154,4 @@ This project is proprietary and confidential. Unauthorized copying or distributi
 
 ## Contact
 
-DefineX - contact@definex.com
-
-## Environment Setup
-
-This project uses environment variables for configuration. These variables are stored in a `.env` file in the root directory.
-
-### Setting up the .env file
-
-1. Create a `.env` file in the root directory (a template is provided in the repository)
-2. Configure the following variables:
-
-```
-# Database Configuration
-DB_URL=jdbc:postgresql://localhost:5432/defineX-task
-DB_USERNAME=postgres
-DB_PASSWORD=your_password
-
-# JWT Configuration
-JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRATION=86400000  # 24 hours in milliseconds
-
-# Redis Configuration
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=your_redis_password
-
-# Kafka Configuration
-KAFKA_BOOTSTRAP_SERVERS=localhost:9092
-```
-
-## Running the Application
-
-1. Make sure you have set up your `.env` file
-2. Run the application with:
-
-```
-./mvnw spring-boot:run
-```
-
-For testing:
-
-```
-./mvnw test
-``` 
+DefineX - contact@definex.com 
