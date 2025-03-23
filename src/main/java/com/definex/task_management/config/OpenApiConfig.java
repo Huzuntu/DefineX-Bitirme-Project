@@ -30,30 +30,29 @@ public class OpenApiConfig {
                                 ##  Testing with Swagger UI
                                 
                                 ### Authentication Steps
-                                1. First, register a new user or login with existing credentials at the `/api/auth` endpoints
-                                2. Copy the JWT token from the response
-                                3. Click the "Authorize" button at the top of the page
-                                4. Paste your token with format: `Bearer your_token_here`
-                                5. Click "Authorize" then "Close"
+                                1. First, register a new user at the `/api/auth/register` endpoint
+                                2. Then, login with the registered user at the `/api/auth/login` endpoint
+                                3. It will return a JWT token, copy the token.
+                                4. Click the "Authorize" button 
+                                5. Paste your token 
+                                6. Click "Authorize" then "Close"
                                 
                                 ### Using the API
-                                1. Endpoints are categorized by tags for easy navigation
-                                2. Click on an endpoint to expand it
-                                3. Click "Try it out" to test the endpoint
-                                4. Fill in the required parameters
-                                5. Click "Execute" to send the request
-                                6. View the response below
+                                1. Endpoints are categorized by tags
+                                2. Click the endpoint and fill in the required parameters
+                                3. Click "Execute" to send the request
+                                4. View the response below
                                 
-                                ### File Upload Testing
+                                ### File Upload Testing (You have to create a task first)
                                 1. For file uploads, use the `/api/attachments` endpoint
                                 2. Select the file using the file picker in the request body
-                                3. Provide the required task ID
+                                3. Provide the required task ID 
                                 4. Execute the request
                                 
-                                ### Testing State Transitions
+                                ### Testing State Transitions (You have to create a task first)
                                 1. Use the task update endpoint to change task states
                                 2. Only valid state transitions will be accepted
-                                3. Error responses will indicate invalid transitions
+                                3. Error responses will show you've typed invalid transitions
                                 """)
                         .version("1.0")
                         .contact(new Contact()
