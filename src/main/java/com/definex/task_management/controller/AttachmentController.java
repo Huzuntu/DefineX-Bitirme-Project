@@ -4,7 +4,6 @@ import com.definex.task_management.dto.AttachmentRequest;
 import com.definex.task_management.dto.AttachmentResponse;
 import com.definex.task_management.service.AttachmentService;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +16,14 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/attachments")
-@RequiredArgsConstructor
 @Tag(name = "6. Attachment Management")
 @Slf4j
 public class AttachmentController {
     private final AttachmentService attachmentService;
+
+    public AttachmentController(AttachmentService attachmentService) {
+        this.attachmentService = attachmentService;
+    }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")

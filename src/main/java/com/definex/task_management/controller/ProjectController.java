@@ -5,7 +5,6 @@ import com.definex.task_management.dto.ProjectResponse;
 import com.definex.task_management.service.ProjectService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,11 +15,14 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/projects")
-@RequiredArgsConstructor
 @Tag(name = "3. Project Management")
 @Slf4j
 public class ProjectController {
     private final ProjectService projectService;
+
+    public ProjectController(ProjectService projectService) {
+        this.projectService = projectService;
+    }
 
     @PostMapping
     @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")

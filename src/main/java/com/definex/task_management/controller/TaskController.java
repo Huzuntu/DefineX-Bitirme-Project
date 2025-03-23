@@ -7,7 +7,6 @@ import com.definex.task_management.enums.TaskPriority;
 import com.definex.task_management.service.TaskService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,11 +17,14 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/tasks")
-@RequiredArgsConstructor
 @Tag(name = "4. Task Management")
 @Slf4j
 public class TaskController {
     private final TaskService taskService;
+
+    public TaskController(TaskService taskService) {
+        this.taskService = taskService;
+    }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")

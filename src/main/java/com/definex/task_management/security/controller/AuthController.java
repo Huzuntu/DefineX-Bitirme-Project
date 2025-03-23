@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth")
 @Tag(name = "1. Authentication")
 public class AuthController {
-
     private final AuthenticationService authenticationService;
     private final UserService userService;
 
@@ -49,11 +48,5 @@ public class AuthController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(userService.createUser(request));
-    }
-
-    @ExceptionHandler(DeniedAccessException.class)
-    public ResponseEntity<String> handleAccessDeniedException(DeniedAccessException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ex.getMessage());
     }
 }

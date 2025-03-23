@@ -6,7 +6,6 @@ import com.definex.task_management.enums.UserRole;
 import com.definex.task_management.exception.EntityNotFoundException;
 import com.definex.task_management.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
