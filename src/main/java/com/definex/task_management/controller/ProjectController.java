@@ -30,7 +30,7 @@ public class ProjectController {
     }
 
     @GetMapping("/department/{department}")
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     public ResponseEntity<List<ProjectResponse>> getProjectsByDepartment(@PathVariable String department) {
         log.info("Fetching projects for department: {}", department);
         return ResponseEntity.ok(projectService.getProjectsByDepartment(department));
@@ -44,7 +44,7 @@ public class ProjectController {
     }
 
     @PutMapping("/{projectId}")
-    @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER')")
     public ResponseEntity<ProjectResponse> updateProject(
             @PathVariable UUID projectId,
             @Valid @RequestBody ProjectRequest projectRequest) {
@@ -53,7 +53,7 @@ public class ProjectController {
     }
 
     @PatchMapping("/{projectId}/status/{status}")
-    @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER')")
     public ResponseEntity<ProjectResponse> updateProjectStatus(
             @PathVariable UUID projectId,
             @PathVariable String status) {
@@ -71,7 +71,7 @@ public class ProjectController {
     }
 
     @PostMapping("/{projectId}/members/{userId}")
-    @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER')")
     public ResponseEntity<ProjectResponse> addTeamMember(
             @PathVariable UUID projectId,
             @PathVariable UUID userId) {
@@ -80,7 +80,7 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}/members/{userId}")
-    @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER')")
     public ResponseEntity<ProjectResponse> removeTeamMember(
             @PathVariable UUID projectId,
             @PathVariable UUID userId) {

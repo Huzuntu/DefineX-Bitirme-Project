@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +24,7 @@ public class AttachmentController {
     private final AttachmentService attachmentService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public ResponseEntity<AttachmentResponse> uploadAttachment(
             @RequestParam("file") MultipartFile file,
             @RequestParam("taskId") UUID taskId) {
@@ -34,18 +36,21 @@ public class AttachmentController {
     }
 
     @GetMapping("/{attachmentId}")
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public ResponseEntity<AttachmentResponse> getAttachmentById(@PathVariable UUID attachmentId) {
         log.info("Fetching attachment with id: {}", attachmentId);
         return ResponseEntity.ok(attachmentService.getAttachmentById(attachmentId));
     }
 
     @GetMapping("/task/{taskId}")
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public ResponseEntity<List<AttachmentResponse>> getAttachmentsByTaskId(@PathVariable UUID taskId) {
         log.info("Fetching all attachments for task id: {}", taskId);
         return ResponseEntity.ok(attachmentService.getAttachmentsByTaskId(taskId));
     }
 
     @DeleteMapping("/{attachmentId}")
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public ResponseEntity<Void> deleteAttachment(@PathVariable UUID attachmentId) {
         log.info("Deleting attachment with id: {}", attachmentId);
         attachmentService.deleteAttachment(attachmentId);
@@ -53,6 +58,7 @@ public class AttachmentController {
     }
 
     @GetMapping("/{attachmentId}/download")
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public ResponseEntity<Resource> downloadAttachment(@PathVariable UUID attachmentId) {
         log.info("Downloading attachment with id: {}", attachmentId);
         Resource resource = attachmentService.downloadAttachment(attachmentId);

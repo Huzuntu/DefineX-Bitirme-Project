@@ -39,7 +39,6 @@ public class CommentServiceImpl extends BaseService implements CommentService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public CommentResponse createComment(CommentRequest commentRequest) {
         log.info("Creating new comment for task id: {}", commentRequest.getTaskId());
         CustomUserDetails currentUser = getCurrentUser();
@@ -56,7 +55,6 @@ public class CommentServiceImpl extends BaseService implements CommentService {
 
     @Override
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public CommentResponse getCommentById(UUID commentId) {
         log.info("Fetching comment with id: {}", commentId);
         CustomUserDetails currentUser = getCurrentUser();
@@ -70,7 +68,6 @@ public class CommentServiceImpl extends BaseService implements CommentService {
 
     @Override
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public List<CommentResponse> getCommentsByTaskId(UUID taskId) {
         log.info("Fetching all comments for task id: {}", taskId);
         CustomUserDetails currentUser = getCurrentUser();
@@ -87,7 +84,6 @@ public class CommentServiceImpl extends BaseService implements CommentService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public CommentResponse updateComment(UUID commentId, String content) {
         log.info("Updating comment with id: {}", commentId);
         CustomUserDetails currentUser = getCurrentUser();
@@ -110,7 +106,6 @@ public class CommentServiceImpl extends BaseService implements CommentService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public void deleteComment(UUID commentId) {
         log.info("Deleting comment with id: {}", commentId);
         CustomUserDetails currentUser = getCurrentUser();

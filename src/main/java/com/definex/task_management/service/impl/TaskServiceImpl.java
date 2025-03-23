@@ -48,7 +48,6 @@ public class TaskServiceImpl extends BaseService implements TaskService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse createTask(TaskRequest taskRequest) {
         log.info("Creating new task with title: {}", taskRequest.getTitle());
@@ -73,7 +72,6 @@ public class TaskServiceImpl extends BaseService implements TaskService {
 
     @Override
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     @Cacheable(value = "taskCache", key = "#taskId")
     public TaskResponse getTaskById(UUID taskId) {
         log.info("Fetching task with id: {}", taskId);
@@ -85,7 +83,6 @@ public class TaskServiceImpl extends BaseService implements TaskService {
 
     @Override
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @Cacheable(value = "taskCache", key = "'project:' + #projectId")
     public List<TaskResponse> getAllTasksUnderProject(UUID projectId) {
         log.info("Fetching all tasks for project id: {}", projectId);
@@ -102,7 +99,6 @@ public class TaskServiceImpl extends BaseService implements TaskService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse updateTask(UUID taskId, TaskRequest taskRequest) {
         log.info("Updating task with id: {}", taskId);
@@ -131,7 +127,6 @@ public class TaskServiceImpl extends BaseService implements TaskService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse deleteTask(UUID taskId) {
         log.info("Deleting task with id: {}", taskId);
@@ -144,7 +139,6 @@ public class TaskServiceImpl extends BaseService implements TaskService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse updateTaskState(UUID taskId, TaskState newState, String reason) {
         log.info("Updating task state for task id: {} to state: {}", taskId, newState);
@@ -164,7 +158,6 @@ public class TaskServiceImpl extends BaseService implements TaskService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse updateTaskPriority(UUID taskId, TaskPriority priority) {
         log.info("Updating task priority for task id: {} to priority: {}", taskId, priority);
@@ -180,7 +173,6 @@ public class TaskServiceImpl extends BaseService implements TaskService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse assignUserToTask(UUID taskId, UUID userId) {
         log.info("Assigning user id: {} to task id: {}", userId, taskId);
@@ -196,7 +188,6 @@ public class TaskServiceImpl extends BaseService implements TaskService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @CacheEvict(value = "taskCache", allEntries = true)
     public TaskResponse removeUserFromTask(UUID taskId, UUID userId) {
         log.info("Removing user id: {} from task id: {}", userId, taskId);

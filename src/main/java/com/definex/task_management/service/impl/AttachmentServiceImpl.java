@@ -58,7 +58,6 @@ public class AttachmentServiceImpl extends BaseService implements AttachmentServ
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public AttachmentResponse uploadAttachment(AttachmentRequest attachmentRequest) {
         log.info("Uploading attachment for task id: {}", attachmentRequest.getTaskId());
         CustomUserDetails currentUser = getCurrentUser();
@@ -83,7 +82,6 @@ public class AttachmentServiceImpl extends BaseService implements AttachmentServ
 
     @Override
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public AttachmentResponse getAttachmentById(UUID attachmentId) {
         log.info("Fetching attachment with id: {}", attachmentId);
         CustomUserDetails currentUser = getCurrentUser();
@@ -97,7 +95,6 @@ public class AttachmentServiceImpl extends BaseService implements AttachmentServ
 
     @Override
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public List<AttachmentResponse> getAttachmentsByTaskId(UUID taskId) {
         log.info("Fetching all attachments for task id: {}", taskId);
         CustomUserDetails currentUser = getCurrentUser();
@@ -113,7 +110,6 @@ public class AttachmentServiceImpl extends BaseService implements AttachmentServ
 
     @Override
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public Resource downloadAttachment(UUID attachmentId) {
         log.info("Downloading attachment with id: {}", attachmentId);
         CustomUserDetails currentUser = getCurrentUser();
@@ -137,7 +133,6 @@ public class AttachmentServiceImpl extends BaseService implements AttachmentServ
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public void deleteAttachment(UUID attachmentId) {
         log.info("Deleting attachment with id: {}", attachmentId);
         CustomUserDetails currentUser = getCurrentUser();

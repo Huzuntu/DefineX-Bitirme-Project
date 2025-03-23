@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,24 +24,28 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public ResponseEntity<CommentResponse> createComment(@Valid @RequestBody CommentRequest commentRequest) {
         log.info("Creating new comment for task id: {}", commentRequest.getTaskId());
         return ResponseEntity.ok(commentService.createComment(commentRequest));
     }
 
     @GetMapping("/{commentId}")
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public ResponseEntity<CommentResponse> getCommentById(@PathVariable UUID commentId) {
         log.info("Fetching comment with id: {}", commentId);
         return ResponseEntity.ok(commentService.getCommentById(commentId));
     }
 
     @GetMapping("/task/{taskId}")
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public ResponseEntity<List<CommentResponse>> getCommentsByTaskId(@PathVariable UUID taskId) {
         log.info("Fetching all comments for task id: {}", taskId);
         return ResponseEntity.ok(commentService.getCommentsByTaskId(taskId));
     }
 
     @PutMapping("/{commentId}")
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable UUID commentId,
             @NotBlank @RequestParam String content) {
@@ -49,6 +54,7 @@ public class CommentController {
     }
 
     @DeleteMapping("/{commentId}")
+    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public ResponseEntity<Void> deleteComment(@PathVariable UUID commentId) {
         log.info("Deleting comment with id: {}", commentId);
         commentService.deleteComment(commentId);

@@ -75,7 +75,6 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @CacheEvict(value = "userCache", allEntries = true)
-    @PreAuthorize("hasRole('PROJECT_GROUP_MANAGER')")
     public UserResponse updateUser(UUID userId, UserRequest userRequest) {
         log.info("Updating user with id: {}", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
@@ -94,7 +93,6 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @CacheEvict(value = "userCache", allEntries = true)
-    @PreAuthorize("hasRole('PROJECT_GROUP_MANAGER')")
     public void deleteUser(UUID userId) {
         log.info("Deleting user with id: {}", userId);
         if (!userRepository.existsById(userId)) {

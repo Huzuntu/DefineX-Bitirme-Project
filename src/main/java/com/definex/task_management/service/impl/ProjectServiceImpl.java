@@ -44,7 +44,6 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
     @CacheEvict(value = "projectCache", allEntries = true)
     public ProjectResponse createProject(ProjectRequest projectRequest) {
         log.info("Creating new project with title: {}", projectRequest.getTitle());
@@ -67,7 +66,6 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     @Cacheable(value = "projectCache", key = "#projectId")
     public ProjectResponse getProjectById(UUID projectId) {
         log.info("Fetching project with id: {}", projectId);
@@ -79,7 +77,6 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER')")
     @Cacheable(value = "projectCache", key = "'department:' + #department")
     public List<ProjectResponse> getProjectsByDepartment(String department) {
         log.info("Fetching all projects for department: {}", department);
@@ -94,7 +91,6 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
     @CacheEvict(value = "projectCache", allEntries = true)
     public ProjectResponse updateProject(UUID projectId, ProjectRequest projectRequest) {
         log.info("Updating project with id: {}", projectId);
@@ -119,7 +115,6 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
     @CacheEvict(value = "projectCache", allEntries = true)
     public ProjectResponse updateProjectStatus(UUID projectId, String newStatus) {
         log.info("Updating status of project id: {} to: {}", projectId, newStatus);
@@ -138,7 +133,6 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER')")
     public ProjectResponse assignTask(UUID projectId, UUID taskId) {
         log.info("Assigning task id: {} to project id: {}", taskId, projectId);
         return projectTaskService.assignTaskToProject(projectId, taskId, getCurrentUser());
@@ -146,7 +140,6 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
     @CacheEvict(value = "projectCache", allEntries = true)
     public ProjectResponse addTeamMember(UUID projectId, UUID userId) {
         log.info("Adding user id: {} to project id: {}", userId, projectId);
@@ -163,7 +156,6 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
     @CacheEvict(value = "projectCache", allEntries = true)
     public ProjectResponse removeTeamMember(UUID projectId, UUID userId) {
         log.info("Removing user id: {} from project id: {}", userId, projectId);
@@ -180,7 +172,6 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ROLE_PROJECT_GROUP_MANAGER')")
     @CacheEvict(value = "projectCache", allEntries = true)
     public void deleteProject(UUID projectId) {
         log.info("Deleting project with id: {}", projectId);
@@ -192,7 +183,6 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public ProjectResponse getProjectByIdWithValidation(UUID projectId, UUID userId) {
         Project project = getProjectEntityById(projectId);
         boolean isAssigned = project.getTeamMembers().stream()
@@ -206,18 +196,11 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_PROJECT_GROUP_MANAGER', 'ROLE_PROJECT_MANAGER', 'ROLE_TEAM_LEADER', 'ROLE_TEAM_MEMBER')")
     public Project getProjectEntityByIdWithValidation(UUID projectId, UUID userId) {
         return projectTaskService.getProjectEntityByIdWithValidation(projectId, userId);
     }
 
     private Project getProjectEntityById(UUID projectId) {
         return projectTaskService.getProjectEntityById(projectId);
-    }
-
-    private void validateStateTransition(ProjectStatus currentState, ProjectStatus newState) {
-        if (!currentState.canTransitionTo(newState)) {
-            throw new InvalidStateTransitionException("Invalid state transition from " + currentState + " to " + newState);
-        }
     }
 }
