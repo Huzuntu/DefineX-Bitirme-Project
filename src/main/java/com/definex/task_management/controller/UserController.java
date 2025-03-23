@@ -30,18 +30,21 @@ public class UserController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         log.info("Fetching all users");
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'PROJECT_GROUP_MANAGER')")
     public ResponseEntity<UserResponse> getUserById(@PathVariable UUID userId) {
         log.info("Fetching user with id: {}", userId);
         return ResponseEntity.ok(userService.getUserById(userId));
     }
 
     @PutMapping("/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable UUID userId,
             @Valid @RequestBody UserRequest userRequest) {

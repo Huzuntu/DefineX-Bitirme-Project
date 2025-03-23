@@ -116,7 +116,7 @@ public class UserControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "PROJECT_GROUP_MANAGER")
+    @WithMockUser(roles = "ADMIN")
     void getAllUsers_ShouldReturnOk() throws Exception {
         List<UserResponse> users = Arrays.asList(userResponse);
         when(userService.getAllUsers()).thenReturn(users);
@@ -157,7 +157,7 @@ public class UserControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "PROJECT_GROUP_MANAGER")
+    @WithMockUser(roles = "ADMIN")
     void updateUser_ShouldReturnOk() throws Exception {
         when(userService.updateUser(eq(userId), any(UserRequest.class))).thenReturn(userResponse);
 
