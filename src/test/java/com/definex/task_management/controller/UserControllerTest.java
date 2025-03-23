@@ -68,7 +68,7 @@ public class UserControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "PROJECT_GROUP_MANAGER")
+    @WithMockUser(roles = "ADMIN")
     void createUser_ShouldReturnOk() throws Exception {
         when(userService.createUser(any(UserRequest.class))).thenReturn(userResponse);
 
@@ -86,12 +86,13 @@ public class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "PROJECT_GROUP_MANAGER")
     void createUser_ShouldReturnForbidden() throws Exception {
         when(userService.createUser(any(UserRequest.class))).thenReturn(userResponse);
 
         mockMvc.perform(post(API_BASE_PATH)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
+                        .content(objectMapper.writeValueAsString(userRequest)))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
@@ -190,7 +191,7 @@ public class UserControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "PROJECT_GROUP_MANAGER")
+    @WithMockUser(roles = "ADMIN")
     void deleteUser_ShouldReturnOk() throws Exception {
         doNothing().when(userService).deleteUser(userId);
 
@@ -202,7 +203,7 @@ public class UserControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "PROJECT_GROUP_MANAGER")
+    @WithMockUser(roles = "ADMIN")
     void deleteUser_ShouldReturnNotFound() throws Exception {
         doThrow(new EntityNotFoundException("User not found")).when(userService).deleteUser(userId);
 

@@ -94,6 +94,7 @@ public class ProjectControllerTest {
                 .title("Test title")
                 .description("Test description")
                 .department("Engineering")
+                .status(ProjectStatus.IN_PROGRESS)
                 .teamMembers(Set.of(UserMapper.toResponse(user1), UserMapper.toResponse(user2)))
                 .build();
     }
@@ -282,8 +283,7 @@ public class ProjectControllerTest {
         String status = ProjectStatus.COMPLETED.toString();
         when(projectService.updateProjectStatus(projectId, status)).thenReturn(projectResponse);
 
-        mockMvc.perform(patch(API_BASE_PATH + "/{projectId}/status/{status}", projectId, status)
-                        .param("status", status))
+        mockMvc.perform(patch(API_BASE_PATH + "/{projectId}/status/{status}", projectId, status))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(projectId.toString()));
@@ -296,8 +296,7 @@ public class ProjectControllerTest {
         when(projectService.updateProjectStatus(projectId, status))
                 .thenThrow(new DeniedAccessException("User does not have access to resources in another department"));
 
-        mockMvc.perform(patch(API_BASE_PATH + "/{projectId}/status/{status}", projectId, status)
-                        .param("status", status))
+        mockMvc.perform(patch(API_BASE_PATH + "/{projectId}/status/{status}", projectId, status))
                 .andDo(print())
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("User does not have access to resources in another department"));
@@ -311,8 +310,7 @@ public class ProjectControllerTest {
         when(projectService.updateProjectStatus(nonExistentId, status))
                 .thenThrow(new EntityNotFoundException("Project not found with id: " + nonExistentId));
 
-        mockMvc.perform(patch(API_BASE_PATH + "/{projectId}/status/{status}", nonExistentId, status)
-                        .param("status", status))
+        mockMvc.perform(patch(API_BASE_PATH + "/{projectId}/status/{status}", nonExistentId, status))
                 .andDo(print())
                 .andExpect(status().isNotFound());
     }
