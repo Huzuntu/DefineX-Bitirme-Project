@@ -3,17 +3,16 @@ package com.definex.task_management.service.impl;
 import com.definex.task_management.dto.ProjectRequest;
 import com.definex.task_management.dto.ProjectResponse;
 import com.definex.task_management.entity.Project;
-import com.definex.task_management.entity.Task;
 import com.definex.task_management.entity.User;
 import com.definex.task_management.enums.ProjectStatus;
 import com.definex.task_management.enums.UserRole;
 import com.definex.task_management.exception.DeniedAccessException;
 import com.definex.task_management.exception.EntityNotFoundException;
 import com.definex.task_management.exception.InvalidStateTransitionException;
-import com.definex.task_management.mapper.UserMapper;
 import com.definex.task_management.repository.ProjectRepository;
+import com.definex.task_management.repository.TaskRepository;
 import com.definex.task_management.security.CustomUserDetails;
-import com.definex.task_management.service.ProjectTaskService;
+import com.definex.task_management.service.TaskService;
 import com.definex.task_management.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,7 +40,7 @@ class ProjectServiceImplTest {
     private UserService userService;
 
     @Mock
-    private ProjectTaskService projectTaskService;
+    private TaskRepository taskRepository;
 
     @Mock
     private SecurityContext securityContext;
@@ -138,7 +137,7 @@ class ProjectServiceImplTest {
     @Test
     void getProjectById_Success() {
         setupSecurityContext(customUserDetails);
-        when(projectTaskService.getProjectEntityById(projectId)).thenReturn(project);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
 
         ProjectResponse response = projectService.getProjectById(projectId);
 
@@ -147,18 +146,17 @@ class ProjectServiceImplTest {
         assertEquals(project.getTitle(), response.getTitle());
         assertEquals(project.getDepartment(), response.getDepartment());
 
-        verify(projectTaskService).getProjectEntityById(projectId);
+        verify(projectRepository).findById(projectId);
     }
 
     @Test
     void getProjectById_NotFound() {
-        when(projectTaskService.getProjectEntityById(projectId))
-                .thenThrow(new EntityNotFoundException("Project not found"));
+        when(projectRepository.findById(projectId)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class,
                 () -> projectService.getProjectById(projectId));
 
-        verify(projectTaskService).getProjectEntityById(projectId);
+        verify(projectRepository).findById(projectId);
     }
 
     @Test
@@ -179,7 +177,7 @@ class ProjectServiceImplTest {
     @Test
     void updateProject_Success() {
         setupSecurityContext(customUserDetails);
-        when(projectTaskService.getProjectEntityById(projectId)).thenReturn(project);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
         when(userService.getUserEntityById(userId)).thenReturn(user);
         when(projectRepository.save(any(Project.class))).thenReturn(project);
 
@@ -190,14 +188,14 @@ class ProjectServiceImplTest {
         assertEquals(projectRequest.getTitle(), response.getTitle());
         assertEquals(projectRequest.getDepartment(), response.getDepartment());
 
-        verify(projectTaskService).getProjectEntityById(projectId);
+        verify(projectRepository).findById(projectId);
         verify(projectRepository).save(any(Project.class));
     }
 
     @Test
     void updateProjectStatus_Success() {
         setupSecurityContext(customUserDetails);
-        when(projectTaskService.getProjectEntityById(projectId)).thenReturn(project);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
         when(projectRepository.save(any(Project.class))).thenReturn(project);
 
         ProjectResponse response = projectService.updateProjectStatus(projectId, "COMPLETED");
@@ -206,19 +204,19 @@ class ProjectServiceImplTest {
         assertEquals(projectId, response.getId());
         assertEquals(ProjectStatus.COMPLETED, response.getStatus());
 
-        verify(projectTaskService).getProjectEntityById(projectId);
+        verify(projectRepository).findById(projectId);
         verify(projectRepository).save(any(Project.class));
     }
 
     @Test
     void updateProjectStatus_InvalidTransition() {
         project.setStatus(ProjectStatus.COMPLETED);
-        when(projectTaskService.getProjectEntityById(projectId)).thenReturn(project);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
 
         assertThrows(InvalidStateTransitionException.class,
                 () -> projectService.updateProjectStatus(projectId, "IN_PROGRESS"));
 
-        verify(projectTaskService).getProjectEntityById(projectId);
+        verify(projectRepository).findById(projectId);
         verify(projectRepository, never()).save(any(Project.class));
     }
 
@@ -231,7 +229,7 @@ class ProjectServiceImplTest {
                 .department("IT")
                 .build();
 
-        when(projectTaskService.getProjectEntityById(projectId)).thenReturn(project);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
         when(userService.getUserEntityById(newUserId)).thenReturn(newUser);
         when(projectRepository.save(any(Project.class))).thenReturn(project);
 
@@ -240,7 +238,7 @@ class ProjectServiceImplTest {
         assertNotNull(response);
         assertEquals(projectId, response.getId());
 
-        verify(projectTaskService).getProjectEntityById(projectId);
+        verify(projectRepository).findById(projectId);
         verify(userService).getUserEntityById(newUserId);
         verify(projectRepository).save(any(Project.class));
     }
@@ -248,7 +246,7 @@ class ProjectServiceImplTest {
     @Test
     void removeTeamMember_Success() {
         setupSecurityContext(customUserDetails);
-        when(projectTaskService.getProjectEntityById(projectId)).thenReturn(project);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
         when(userService.getUserEntityById(userId)).thenReturn(user);
         when(projectRepository.save(any(Project.class))).thenReturn(project);
 
@@ -257,7 +255,7 @@ class ProjectServiceImplTest {
         assertNotNull(response);
         assertEquals(projectId, response.getId());
 
-        verify(projectTaskService).getProjectEntityById(projectId);
+        verify(projectRepository).findById(projectId);
         verify(userService).getUserEntityById(userId);
         verify(projectRepository).save(any(Project.class));
     }
@@ -265,64 +263,112 @@ class ProjectServiceImplTest {
     @Test
     void deleteProject_Success() {
         setupSecurityContext(customUserDetails);
-        when(projectTaskService.getProjectEntityById(projectId)).thenReturn(project);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        doNothing().when(projectRepository).delete(project);
 
         projectService.deleteProject(projectId);
 
-        verify(projectTaskService).getProjectEntityById(projectId);
+        verify(projectRepository).findById(projectId);
         verify(projectRepository).delete(project);
     }
 
     @Test
     void getProjectByIdWithValidation_Success() {
-        UUID differentUserId = UUID.randomUUID();
-        User differentUser = User.builder()
-                .id(differentUserId)
-                .name("Different User")
-                .email("different@example.com")
-                .password("password")
-                .role(UserRole.TEAM_MEMBER)
-                .department("HR")
-                .build();
-        
-        UUID differentProjectId = UUID.randomUUID();
         Project projectWithUser = Project.builder()
-                .id(differentProjectId)
+                .id(projectId)
                 .title("Test Project")
                 .description("Test Description")
-                .department("HR")
+                .department("IT")
                 .status(ProjectStatus.IN_PROGRESS)
-                .teamMembers(new HashSet<>(Collections.singletonList(differentUser)))
-                .tasks(new HashSet<>())
+                .teamMembers(new HashSet<>(Collections.singletonList(user)))
                 .build();
-                
-        when(projectTaskService.getProjectEntityById(differentProjectId)).thenReturn(projectWithUser);
-        ProjectResponse response = projectService.getProjectByIdWithValidation(differentProjectId, differentUserId);
+        
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectWithUser));
+
+        ProjectResponse response = projectService.getProjectByIdWithValidation(projectId, userId);
 
         assertNotNull(response);
-        assertEquals(new HashSet<>(Collections.singletonList(UserMapper.toResponse(differentUser))), response.getTeamMembers());
+        assertEquals(projectId, response.getId());
         assertEquals(projectWithUser.getTitle(), response.getTitle());
+        assertEquals(projectWithUser.getDepartment(), response.getDepartment());
 
+        verify(projectRepository).findById(projectId);
     }
 
     @Test
     void getProjectByIdWithValidation_UnauthorizedAccess() {
-        UUID differentUserId = UUID.randomUUID();
+        User differentUser = User.builder()
+                .id(UUID.randomUUID())
+                .name("Different User")
+                .build();
+
         Project projectWithoutUser = Project.builder()
                 .id(projectId)
                 .title("Test Project")
                 .description("Test Description")
-                .department("HR")
+                .department("IT")
                 .status(ProjectStatus.IN_PROGRESS)
                 .teamMembers(new HashSet<>())
-                .tasks(new HashSet<>())
                 .build();
 
-        when(projectTaskService.getProjectEntityById(projectId)).thenReturn(projectWithoutUser);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(projectWithoutUser));
 
         assertThrows(DeniedAccessException.class,
-                () -> projectService.getProjectByIdWithValidation(projectId, differentUserId));
+                () -> projectService.getProjectByIdWithValidation(projectId, differentUser.getId()));
 
-        verify(projectTaskService).getProjectEntityById(projectId);
+        verify(projectRepository).findById(projectId);
+    }
+    
+    @Test
+    void getProjectEntityByIdWithValidation_Success() {
+        when(projectRepository.findByIdAndUserAccess(projectId, userId)).thenReturn(Optional.of(project));
+        
+        Project result = projectService.getProjectEntityByIdWithValidation(projectId, userId);
+        
+        assertNotNull(result);
+        assertEquals(projectId, result.getId());
+        
+        verify(projectRepository).findByIdAndUserAccess(projectId, userId);
+    }
+    
+    @Test
+    void getProjectEntityByIdWithValidation_NotFound() {
+        when(projectRepository.findByIdAndUserAccess(projectId, userId)).thenReturn(Optional.empty());
+        
+        assertThrows(EntityNotFoundException.class, 
+                () -> projectService.getProjectEntityByIdWithValidation(projectId, userId));
+                
+        verify(projectRepository).findByIdAndUserAccess(projectId, userId);
+    }
+    
+    @Test
+    void assignTask_Success() {
+        setupSecurityContext(customUserDetails);
+        UUID taskId = UUID.randomUUID();
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(taskRepository.assignTaskToProject(taskId, projectId)).thenReturn(1);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        
+        ProjectResponse response = projectService.assignTask(projectId, taskId);
+        
+        assertNotNull(response);
+        assertEquals(projectId, response.getId());
+        
+        verify(projectRepository, times(2)).findById(projectId);
+        verify(taskRepository).assignTaskToProject(taskId, projectId);
+    }
+    
+    @Test
+    void assignTask_TaskNotFound() {
+        setupSecurityContext(customUserDetails);
+        UUID taskId = UUID.randomUUID();
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(taskRepository.assignTaskToProject(taskId, projectId)).thenReturn(0);
+        
+        assertThrows(EntityNotFoundException.class,
+                () -> projectService.assignTask(projectId, taskId));
+                
+        verify(projectRepository).findById(projectId);
+        verify(taskRepository).assignTaskToProject(taskId, projectId);
     }
 }

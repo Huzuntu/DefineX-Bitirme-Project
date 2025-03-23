@@ -35,10 +35,4 @@ public abstract class BaseService {
         }
     }
 
-    protected void validatePgmAccess(CustomUserDetails user, String department) {
-        validateSameDepartment(user, department);
-        if (user.getRole() != UserRole.PROJECT_GROUP_MANAGER) {
-            throw new DeniedAccessException("Only Project Group Manager can perform this operation");
-        }
-    }
 } 

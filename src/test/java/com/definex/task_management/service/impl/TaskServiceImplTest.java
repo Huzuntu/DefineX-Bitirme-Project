@@ -12,9 +12,9 @@ import com.definex.task_management.enums.UserRole;
 import com.definex.task_management.exception.DeniedAccessException;
 import com.definex.task_management.exception.EntityNotFoundException;
 import com.definex.task_management.exception.InvalidStateTransitionException;
+import com.definex.task_management.repository.ProjectRepository;
 import com.definex.task_management.repository.TaskRepository;
 import com.definex.task_management.security.CustomUserDetails;
-import com.definex.task_management.service.ProjectTaskService;
 import com.definex.task_management.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,13 +37,12 @@ class TaskServiceImplTest {
 
     @Mock
     private TaskRepository taskRepository;
-
+    
     @Mock
-    private ProjectTaskService projectTaskService;
+    private ProjectRepository projectRepository;
 
     @Mock
     private UserService userService;
-
 
     @Mock
     private SecurityContext securityContext;
@@ -119,8 +118,8 @@ class TaskServiceImplTest {
 
     @Test
     void createTask_Success() {
-        when(projectTaskService.getProjectEntityByIdWithValidation(projectId, userId))
-                .thenReturn(project);
+        when(projectRepository.findByIdAndUserAccess(projectId, userId))
+                .thenReturn(Optional.of(project));
         when(userService.getUserEntityById(userId)).thenReturn(user);
         when(taskRepository.save(any(Task.class))).thenReturn(task);
 
@@ -133,7 +132,7 @@ class TaskServiceImplTest {
         assertEquals(TaskState.BACKLOG, response.getState());
         assertEquals(taskRequest.getPriority(), response.getPriority());
 
-        verify(projectTaskService).getProjectEntityByIdWithValidation(projectId, userId);
+        verify(projectRepository).findByIdAndUserAccess(projectId, userId);
         verify(userService).getUserEntityById(userId);
         verify(taskRepository).save(any(Task.class));
     }
@@ -147,10 +146,10 @@ class TaskServiceImplTest {
                 .build();
         CustomUserDetails differentUserDetails = new CustomUserDetails(differentUser);
         when(authentication.getPrincipal()).thenReturn(differentUserDetails);
-        when(projectTaskService.getProjectEntityByIdWithValidation(any(), any()))
-                .thenThrow(new DeniedAccessException("Access denied"));
+        when(projectRepository.findByIdAndUserAccess(any(), any()))
+                .thenReturn(Optional.empty());
 
-        assertThrows(DeniedAccessException.class,
+        assertThrows(EntityNotFoundException.class,
                 () -> taskService.createTask(taskRequest));
 
         verify(taskRepository, never()).save(any(Task.class));
@@ -225,7 +224,7 @@ class TaskServiceImplTest {
     }
 
     @Test
-    void assignTask_Success() {
+    void assignUserToTask_Success() {
         UUID newUserId = UUID.randomUUID();
         User newUser = User.builder()
                 .id(newUserId)
@@ -247,7 +246,7 @@ class TaskServiceImplTest {
     }
 
     @Test
-    void unassignTask_Success() {
+    void removeUserFromTask_Success() {
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
         when(userService.getUserEntityById(userId)).thenReturn(user);
         when(taskRepository.save(any(Task.class))).thenReturn(task);
@@ -265,8 +264,12 @@ class TaskServiceImplTest {
     @Test
     void deleteTask_Success() {
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+        doNothing().when(taskRepository).delete(task);
 
-        taskService.deleteTask(taskId);
+        TaskResponse response = taskService.deleteTask(taskId);
+
+        assertNotNull(response);
+        assertEquals(taskId, response.getId());
 
         verify(taskRepository).findById(taskId);
         verify(taskRepository).delete(task);
@@ -285,46 +288,30 @@ class TaskServiceImplTest {
 
     @Test
     void updateTask_Success() {
-        TaskRequest updateRequest = TaskRequest.builder()
-                .title("Updated Task")
-                .userStory("Updated User Story")
-                .acceptanceCriteria("Updated Acceptance Criteria")
-                .priority(TaskPriority.HIGH)
-                .projectId(projectId)
-                .assigneeIds(new HashSet<>(Collections.singletonList(userId)))
-                .build();
-
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
         when(userService.getUserEntityById(userId)).thenReturn(user);
         when(taskRepository.save(any(Task.class))).thenReturn(task);
 
-        TaskResponse response = taskService.updateTask(taskId, updateRequest);
+        TaskResponse response = taskService.updateTask(taskId, taskRequest);
 
         assertNotNull(response);
         assertEquals(taskId, response.getId());
-        assertEquals(updateRequest.getTitle(), response.getTitle());
-        assertEquals(updateRequest.getUserStory(), response.getUserStory());
-        assertEquals(updateRequest.getAcceptanceCriteria(), response.getAcceptanceCriteria());
-        assertEquals(updateRequest.getPriority(), response.getPriority());
+        assertEquals(taskRequest.getTitle(), response.getTitle());
+        assertEquals(taskRequest.getUserStory(), response.getUserStory());
+        assertEquals(taskRequest.getAcceptanceCriteria(), response.getAcceptanceCriteria());
+        assertEquals(taskRequest.getPriority(), response.getPriority());
 
         verify(taskRepository).findById(taskId);
+        verify(userService).getUserEntityById(userId);
         verify(taskRepository).save(any(Task.class));
     }
 
     @Test
     void updateTask_NotFound() {
-        TaskRequest updateRequest = TaskRequest.builder()
-                .title("Updated Task")
-                .userStory("Updated User Story")
-                .acceptanceCriteria("Updated Acceptance Criteria")
-                .priority(TaskPriority.HIGH)
-                .projectId(projectId)
-                .build();
-
         when(taskRepository.findById(taskId)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class,
-                () -> taskService.updateTask(taskId, updateRequest));
+                () -> taskService.updateTask(taskId, taskRequest));
 
         verify(taskRepository).findById(taskId);
         verify(taskRepository, never()).save(any(Task.class));
@@ -332,19 +319,19 @@ class TaskServiceImplTest {
 
     @Test
     void updateTask_DifferentProject() {
-        UUID differentProjectId = UUID.randomUUID();
-        TaskRequest updateRequest = TaskRequest.builder()
-                .title("Updated Task")
-                .userStory("Updated User Story")
-                .acceptanceCriteria("Updated Acceptance Criteria")
-                .priority(TaskPriority.HIGH)
-                .projectId(differentProjectId)
+        TaskRequest taskRequestWithDiffProject = TaskRequest.builder()
+                .title("Test Task")
+                .userStory("Test User Story")
+                .acceptanceCriteria("Test Acceptance Criteria")
+                .priority(TaskPriority.MEDIUM)
+                .projectId(UUID.randomUUID())
+                .assigneeIds(assigneeIds)
                 .build();
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
 
         assertThrows(DeniedAccessException.class,
-                () -> taskService.updateTask(taskId, updateRequest));
+                () -> taskService.updateTask(taskId, taskRequestWithDiffProject));
 
         verify(taskRepository).findById(taskId);
         verify(taskRepository, never()).save(any(Task.class));
@@ -353,8 +340,8 @@ class TaskServiceImplTest {
     @Test
     void getAllTasksUnderProject_Success() {
         List<Task> tasks = Collections.singletonList(task);
-        when(projectTaskService.getProjectEntityByIdWithValidation(projectId, userId))
-                .thenReturn(project);
+        when(projectRepository.findByIdAndUserAccess(projectId, userId))
+                .thenReturn(Optional.of(project));
         when(taskRepository.findByProjectId(projectId)).thenReturn(tasks);
 
         List<TaskResponse> responses = taskService.getAllTasksUnderProject(projectId);
@@ -363,22 +350,20 @@ class TaskServiceImplTest {
         assertEquals(1, responses.size());
         assertEquals(taskId, responses.get(0).getId());
         assertEquals(task.getTitle(), responses.get(0).getTitle());
-        assertEquals(projectId, responses.get(0).getProjectId());
 
-        verify(projectTaskService).getProjectEntityByIdWithValidation(projectId, userId);
+        verify(projectRepository).findByIdAndUserAccess(projectId, userId);
         verify(taskRepository).findByProjectId(projectId);
     }
 
     @Test
     void getAllTasksUnderProject_UnauthorizedAccess() {
-        when(projectTaskService.getProjectEntityByIdWithValidation(projectId, userId))
-                .thenThrow(new DeniedAccessException("Access denied"));
+        when(projectRepository.findByIdAndUserAccess(projectId, userId))
+                .thenReturn(Optional.empty());
 
-        assertThrows(DeniedAccessException.class,
+        assertThrows(EntityNotFoundException.class,
                 () -> taskService.getAllTasksUnderProject(projectId));
 
-        verify(projectTaskService).getProjectEntityByIdWithValidation(projectId, userId);
-        verify(taskRepository, never()).findByProjectId(any());
+        verify(projectRepository).findByIdAndUserAccess(projectId, userId);
+        verify(taskRepository, never()).findByProjectId(any(UUID.class));
     }
-
 }

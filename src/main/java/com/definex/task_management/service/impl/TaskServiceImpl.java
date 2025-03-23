@@ -11,17 +11,15 @@ import com.definex.task_management.exception.DeniedAccessException;
 import com.definex.task_management.exception.EntityNotFoundException;
 import com.definex.task_management.exception.InvalidStateTransitionException;
 import com.definex.task_management.mapper.TaskMapper;
+import com.definex.task_management.repository.ProjectRepository;
 import com.definex.task_management.repository.TaskRepository;
 import com.definex.task_management.security.CustomUserDetails;
 import com.definex.task_management.service.BaseService;
-import com.definex.task_management.service.ProjectTaskService;
 import com.definex.task_management.service.TaskService;
 import com.definex.task_management.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,14 +33,14 @@ import java.util.stream.Collectors;
 @Service
 public class TaskServiceImpl extends BaseService implements TaskService {
     private final TaskRepository taskRepository;
-    private final ProjectTaskService projectTaskService;
+    private final ProjectRepository projectRepository;
     private final UserService userService;
 
     public TaskServiceImpl(TaskRepository taskRepository,
-                          @Lazy ProjectTaskService projectTaskService,
+                          ProjectRepository projectRepository,
                           UserService userService) {
         this.taskRepository = taskRepository;
-        this.projectTaskService = projectTaskService;
+        this.projectRepository = projectRepository;
         this.userService = userService;
     }
 
@@ -52,7 +50,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
     public TaskResponse createTask(TaskRequest taskRequest) {
         log.info("Creating new task with title: {}", taskRequest.getTitle());
         CustomUserDetails currentUser = getCurrentUser();
-        Project project = projectTaskService.getProjectEntityByIdWithValidation(taskRequest.getProjectId(), currentUser.getUserId());
+        Project project = getProjectEntityByIdWithValidation(taskRequest.getProjectId(), currentUser.getUserId());
 
         Task task = TaskMapper.toEntity(taskRequest);
         task.setProject(project);
@@ -77,7 +75,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
         log.info("Fetching task with id: {}", taskId);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
-        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+        validateProjectAccess(currentUser, task.getProject());
         return TaskMapper.toResponse(task);
     }
 
@@ -87,9 +85,9 @@ public class TaskServiceImpl extends BaseService implements TaskService {
     public List<TaskResponse> getAllTasksUnderProject(UUID projectId) {
         log.info("Fetching all tasks for project id: {}", projectId);
         CustomUserDetails currentUser = getCurrentUser();
-        Project project = projectTaskService.getProjectEntityByIdWithValidation(projectId, currentUser.getUserId());
+        Project project = getProjectEntityByIdWithValidation(projectId, currentUser.getUserId());
 
-        projectTaskService.validateProjectAccess(currentUser, project);
+        validateProjectAccess(currentUser, project);
 
         List<Task> tasks = taskRepository.findByProjectId(projectId);
         return tasks.stream()
@@ -104,7 +102,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
         log.info("Updating task with id: {}", taskId);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
-        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+        validateProjectAccess(currentUser, task.getProject());
 
         if (!task.getProject().getId().equals(taskRequest.getProjectId())) {
             throw new DeniedAccessException("Cannot change task's project");
@@ -132,7 +130,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
         log.info("Deleting task with id: {}", taskId);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
-        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+        validateProjectAccess(currentUser, task.getProject());
         taskRepository.delete(task);
         return TaskMapper.toResponse(task);
     }
@@ -144,7 +142,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
         log.info("Updating task state for task id: {} to state: {}", taskId, newState);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
-        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+        validateProjectAccess(currentUser, task.getProject());
         validateStateTransition(task.getState(), newState, reason);
 
         task.setState(newState);
@@ -164,7 +162,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
 
-        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+        validateProjectAccess(currentUser, task.getProject());
 
         task.setPriority(priority);
         Task updatedTask = taskRepository.save(task);
@@ -179,7 +177,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
         User user = userService.getUserEntityById(userId);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
-        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+        validateProjectAccess(currentUser, task.getProject());
 
         task.getAssignees().add(user);
         Task updatedTask = taskRepository.save(task);
@@ -193,7 +191,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
         log.info("Removing user id: {} from task id: {}", userId, taskId);
         CustomUserDetails currentUser = getCurrentUser();
         Task task = getTaskEntityById(taskId);
-        projectTaskService.validateProjectAccess(currentUser, task.getProject());
+        validateProjectAccess(currentUser, task.getProject());
 
         User user = userService.getUserEntityById(userId);
         boolean isAssigned = task.getAssignees().stream()
@@ -217,5 +215,17 @@ public class TaskServiceImpl extends BaseService implements TaskService {
         if (!currentState.canTransitionTo(newState, reason)) {
             throw new InvalidStateTransitionException("Invalid state transition from " + currentState + " to " + newState);
         }
+    }
+    
+    private void validateProjectAccess(CustomUserDetails currentUser, Project project) {
+        log.info("Validating project access for user: {}", currentUser.getUsername());
+        validateUserAccessToProject(currentUser, project);
+    }
+    
+    private Project getProjectEntityByIdWithValidation(UUID projectId, UUID userId) {
+        log.info("Fetching project entity with id: {} and validating for user id: {}", projectId, userId);
+        return projectRepository.findByIdAndUserAccess(projectId, userId)
+                .orElseThrow(() -> new EntityNotFoundException("Project not found with id: " + projectId + 
+                                " or user doesn't have access"));
     }
 } 

@@ -6,19 +6,19 @@ import com.definex.task_management.entity.Project;
 import com.definex.task_management.entity.User;
 import com.definex.task_management.enums.ProjectStatus;
 import com.definex.task_management.exception.DeniedAccessException;
+import com.definex.task_management.exception.EntityNotFoundException;
 import com.definex.task_management.exception.InvalidStateTransitionException;
 import com.definex.task_management.mapper.ProjectMapper;
 import com.definex.task_management.repository.ProjectRepository;
+import com.definex.task_management.repository.TaskRepository;
 import com.definex.task_management.security.CustomUserDetails;
 import com.definex.task_management.service.BaseService;
 import com.definex.task_management.service.ProjectService;
-import com.definex.task_management.service.ProjectTaskService;
 import com.definex.task_management.service.UserService;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,14 +32,14 @@ import java.util.stream.Collectors;
 public class ProjectServiceImpl extends BaseService implements ProjectService {
     private final ProjectRepository projectRepository;
     private final UserService userService;
-    private final ProjectTaskService projectTaskService;
+    private final TaskRepository taskRepository;
 
     public ProjectServiceImpl(ProjectRepository projectRepository, 
                             UserService userService,
-                            ProjectTaskService projectTaskService) {
+                            TaskRepository taskRepository) {
         this.projectRepository = projectRepository;
         this.userService = userService;
-        this.projectTaskService = projectTaskService;
+        this.taskRepository = taskRepository;
     }
 
     @Override
@@ -55,7 +55,7 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
 
         if (projectRequest.getTeamMemberIds() != null && !projectRequest.getTeamMemberIds().isEmpty()) {
             Set<User> teamMembers = projectRequest.getTeamMemberIds().stream()
-                    .map(id -> userService.getUserEntityById(id))
+                    .map(userService::getUserEntityById)
                     .collect(Collectors.toSet());
             project.setTeamMembers(teamMembers);
         }
@@ -135,7 +135,20 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
     @Transactional
     public ProjectResponse assignTask(UUID projectId, UUID taskId) {
         log.info("Assigning task id: {} to project id: {}", taskId, projectId);
-        return projectTaskService.assignTaskToProject(projectId, taskId, getCurrentUser());
+        CustomUserDetails currentUser = getCurrentUser();
+        Project project = getProjectEntityById(projectId);
+        validateUserAccessToProject(currentUser, project);
+        
+        int updatedCount = taskRepository.assignTaskToProject(taskId, projectId);
+        if (updatedCount == 0) {
+            throw new EntityNotFoundException("Task not found with id: " + taskId);
+        }
+        
+        Project updatedProject = projectRepository.findById(projectId).orElseThrow(
+            () -> new EntityNotFoundException("Project not found with id: " + projectId)
+        );
+        
+        return ProjectMapper.toResponse(updatedProject);
     }
 
     @Override
@@ -197,10 +210,15 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public Project getProjectEntityByIdWithValidation(UUID projectId, UUID userId) {
-        return projectTaskService.getProjectEntityByIdWithValidation(projectId, userId);
+        log.info("Fetching project entity with id: {} and validating for user id: {}", projectId, userId);
+        return projectRepository.findByIdAndUserAccess(projectId, userId)
+                .orElseThrow(() -> new EntityNotFoundException("Project not found with id: " + projectId + 
+                                " or user doesn't have access"));
     }
 
     private Project getProjectEntityById(UUID projectId) {
-        return projectTaskService.getProjectEntityById(projectId);
+        log.info("Fetching project entity with id: {}", projectId);
+        return projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException("Project not found with id: " + projectId));
     }
 }
