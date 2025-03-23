@@ -1,8 +1,13 @@
 # DefineX Advanced Task Management System
 
-This project is an advanced task management system developed for DefineX, providing comprehensive project and task management capabilities with modern features and a robust architecture.
+This project is an advanced task management system developed for DefineX Spring Boot Bootcamp Graduation Project. Project and task management capabilities with modern features and a monolithic architecture.
 
 ## Features
+
+- **User Management**
+    - Role-based access control
+    - Team member assignment
+    - Authentication and authorization
 
 - **Project Management**
   - Create and manage projects
@@ -17,10 +22,7 @@ This project is an advanced task management system developed for DefineX, provid
   - Attach files to tasks
   - Add comments to tasks
 
-- **User Management**
-  - Role-based access control
-  - Team member assignment
-  - Authentication and authorization
+
 
 ## Technology Stack
 
@@ -62,7 +64,7 @@ The easiest way to run the application is using Docker Compose, which will set u
    - PostgreSQL database
    - Redis cache
 
-   All services are pre-configured to work together.
+   All services are configured to work together.
 
 3. Access the application:
    - API Documentation: http://localhost:8086/swagger-ui.html
@@ -97,8 +99,6 @@ If you already have PostgreSQL and Redis running, you can just run the applicati
      -e REDIS_HOST=host.docker.internal \
      task-management
    ```
-
-   Note: `host.docker.internal` is used to connect to services running on your host machine from within the Docker container.
 
 ### Option 3: Running Locally
 
@@ -146,7 +146,7 @@ If you already have PostgreSQL and Redis running, you can just run the applicati
 
 ## Testing the API with Swagger UI
 
-Once the application is running, you can access the Swagger UI at http://localhost:8086/swagger-ui.html to test all API endpoints interactively.
+Once the application is running, you can access the Swagger UI at http://localhost:8086/swagger-ui.html to test all API endpoints.
 
 ### API Categories
 
@@ -161,17 +161,17 @@ The API endpoints are organized into the following categories for easier navigat
 
 ### Authentication Steps
 
-1. **Register and Login**:
-   - Navigate to the "1. Authentication" section
-   - Use the `/api/auth/register` endpoint to create a new user
+1. **Register and Login**: 
+   - Admin UserRole is only for creating and deleting Users 
+   - Use the `/api/auth/register/init` endpoint to create a new admin user
    - Use the `/api/auth/login` endpoint with your credentials
    - Copy the JWT token from the response
 
 2. **Authorize in Swagger UI**:
    - Click the "Authorize" button at the top right of the Swagger UI
-   - In the input field, enter: `Bearer your_token_here` (replace with your actual token)
+   - In the input field, enter: `Bearer your_token_here` (replace with your actual token you got from login response)
    - Click "Authorize" then "Close"
-   - All subsequent requests will now include your authentication token
+   - All requests will now include your authentication token
 
 ### Testing Core Features
 
@@ -181,15 +181,16 @@ The API endpoints are organized into the following categories for easier navigat
 3. Assign team members to a project using POST `/api/projects/{projectId}/members`
 
 #### Task Management
-1. Create tasks within a project using POST `/api/tasks`
-2. Update task status with PUT `/api/tasks/{taskId}`
-3. View tasks by various filters using GET `/api/tasks`
+1. Prerequisite: Project must be created before creating a task
+2. Create tasks within a project using POST `/api/tasks`
+3. Update task status with PUT `/api/tasks/{taskId}`
+4. View tasks by various filters using GET `/api/tasks`
 
 #### Task State Transitions
 1. Tasks follow a specific workflow:
-   - Backlog → In Analysis → In Development → Completed
+   - Backlog -> In Analysis -> In Development -> Completed
 2. Test state transitions using the task update endpoint
-3. Try invalid transitions to see validation errors
+3. Try invalid transitions to see validation errors (Example: In Analysis -> Completed is not valid)
 
 #### File Attachments
 1. Attach files to tasks using POST `/api/attachments`
@@ -209,8 +210,8 @@ The API endpoints are organized into the following categories for easier navigat
    - Team Member
 
 2. Test the permission boundaries by:
-   - Logging in as different user roles
-   - Attempting operations that should be allowed/denied based on role
+   - Logging in as different user roles (and authenticate yourself with login response)
+   - Some of the operations are not authorized for some user roles
    - Observing the appropriate permission errors
 
 ## API Documentation
@@ -270,9 +271,9 @@ The API documentation is available through Swagger UI at http://localhost:8086/s
 ### Authorization
 
 Each endpoint has specific role-based access controls. The following roles are available:
-- ADMIN
-- PROJECT_GROUP_MANAGER
-- PROJECT_MANAGER
+- ADMIN (Only related to User creation and deletion)
+- PROJECT_GROUP_MANAGER (Can do everything related to his/her department)
+- PROJECT_MANAGER 
 - TEAM_LEADER
 - TEAM_MEMBER
 
