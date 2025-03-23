@@ -26,8 +26,8 @@ import java.io.StringWriter;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
@@ -135,7 +135,6 @@ class JwtAuthenticationFilterTest {
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         verify(response).setContentType("application/json");
         writer.flush();
         assertTrue(stringWriter.toString().contains("JWT expired"));

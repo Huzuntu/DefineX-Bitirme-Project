@@ -7,26 +7,35 @@ import io.jsonwebtoken.Claims;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
+@ActiveProfiles("test")
 class JwtServiceTest {
 
     private JwtService jwtService;
     private User user;
     private UserDetails userDetails;
-    private static final String SECRET_KEY = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
-    private static final long JWT_EXPIRATION = 86400000;
+    
+    @Value("${jwt.secret}")
+    private String secretKey;
+    
+    @Value("${jwt.expiration}")
+    private long jwtExpiration;
 
     @BeforeEach
     void setUp() {
         jwtService = new JwtService();
-        ReflectionTestUtils.setField(jwtService, "secretKey", SECRET_KEY);
-        ReflectionTestUtils.setField(jwtService, "jwtExpiration", JWT_EXPIRATION);
+        ReflectionTestUtils.setField(jwtService, "secretKey", secretKey);
+        ReflectionTestUtils.setField(jwtService, "jwtExpiration", jwtExpiration);
 
         user = User.builder()
                 .id(UUID.randomUUID())
@@ -90,7 +99,7 @@ class JwtServiceTest {
     void isTokenValid_WithExpiredToken_ReturnsFalse() {
         ReflectionTestUtils.setField(jwtService, "jwtExpiration", -10000); 
         String token = jwtService.generateToken(userDetails);
-        ReflectionTestUtils.setField(jwtService, "jwtExpiration", JWT_EXPIRATION); 
+        ReflectionTestUtils.setField(jwtService, "jwtExpiration", jwtExpiration); 
 
         assertFalse(jwtService.isTokenValid(token, userDetails));
     }
@@ -120,6 +129,6 @@ class JwtServiceTest {
 
         assertNotNull(expiration);
         assertTrue(expiration.after(new Date(System.currentTimeMillis())));
-        assertTrue(expiration.before(new Date(System.currentTimeMillis() + JWT_EXPIRATION + 1000)));
+        assertTrue(expiration.before(new Date(System.currentTimeMillis() + jwtExpiration + 1000)));
     }
 } 
