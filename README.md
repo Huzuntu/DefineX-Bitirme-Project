@@ -233,15 +233,15 @@ The API documentation is available through Swagger UI at http://localhost:8086/s
 - `DELETE /api/v1/users/{userId}` - Delete user
 
 #### 3. Project Management
-- `POST /api/v1/projects` - Create a new project (ROLE_PROJECT_GROUP_MANAGER)
+- `POST /api/v1/projects` - Create a new project (PROJECT_GROUP_MANAGER)
 - `GET /api/v1/projects/department/{department}` - Get projects by department
 - `GET /api/v1/projects/{projectId}` - Get project by ID
-- `PUT /api/v1/projects/{projectId}` - Update project (ROLE_PROJECT_GROUP_MANAGER)
-- `PATCH /api/v1/projects/{projectId}/status/{status}` - Update project status (ROLE_PROJECT_GROUP_MANAGER)
-- `POST /api/v1/projects/{projectId}/tasks/{taskId}` - Assign task to project (ROLE_PROJECT_GROUP_MANAGER, ROLE_PROJECT_MANAGER)
-- `POST /api/v1/projects/{projectId}/members/{userId}` - Add team member to project (ROLE_PROJECT_GROUP_MANAGER)
-- `DELETE /api/v1/projects/{projectId}/members/{userId}` - Remove team member from project (ROLE_PROJECT_GROUP_MANAGER)
-- `DELETE /api/v1/projects/{projectId}` - Delete project (ROLE_PROJECT_GROUP_MANAGER)
+- `PUT /api/v1/projects/{projectId}` - Update project (PROJECT_GROUP_MANAGER)
+- `PATCH /api/v1/projects/{projectId}/status/{status}` - Update project status (PROJECT_GROUP_MANAGER)
+- `POST /api/v1/projects/{projectId}/tasks/{taskId}` - Assign task to project (PROJECT_GROUP_MANAGER, PROJECT_MANAGER)
+- `POST /api/v1/projects/{projectId}/members/{userId}` - Add team member to project (PROJECT_GROUP_MANAGER)
+- `DELETE /api/v1/projects/{projectId}/members/{userId}` - Remove team member from project (PROJECT_GROUP_MANAGER)
+- `DELETE /api/v1/projects/{projectId}` - Delete project (PROJECT_GROUP_MANAGER)
 
 #### 4. Task Management
 - `POST /api/v1/tasks` - Create a new task
