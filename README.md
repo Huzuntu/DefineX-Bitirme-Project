@@ -277,13 +277,6 @@ Each endpoint has specific role-based access controls. The following roles are a
 - TEAM_LEADER
 - TEAM_MEMBER
 
-## Task State Transitions
-
-Tasks follow a specific state transition flow:
-- Happy Path: Backlog ⇔ In Analysis ⇔ In Development/Progress ⇔ Completed
-- Cancel Path: Any state (except Completed) can transition to Cancelled
-- Blocked Paths: In Analysis ⇔ Blocked, In Development/Progress ⇔ Blocked
-
 ## Security
 
 - JWT-based authentication
@@ -313,19 +306,3 @@ mvn clean package
 - `/uploads` - File storage location
 - `docker-compose.yml` - Docker Compose configuration
 - `Dockerfile` - Docker container configuration
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-
-This project is proprietary and confidential. Unauthorized copying or distribution of this project's files, via any medium, is strictly prohibited.
-
-## Contact
-
-DefineX - contact@definex.com 
