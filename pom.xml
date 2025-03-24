@@ -14,9 +14,6 @@
 	<name>Task Management</name>
 	<description>Advanced Task Management</description>
 	<url/>
-	<licenses>
-		<license/>
-	</licenses>
 	<developers>
 		<developer/>
 	</developers>
@@ -126,10 +123,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.micrometer</groupId>
-			<artifactId>micrometer-registry-prometheus</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>me.paulschwarz</groupId>
